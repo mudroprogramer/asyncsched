@@ -27,6 +27,9 @@ class TimeInterval:
         while not self.is_day_legal(next_run):
             next_run = datetime.datetime(next_run.year, next_run.month, next_run.day) + datetime.timedelta(days=1)
 
+        capped_time = self.cap_to_time_interval(next_run.time())
+        next_run = datetime.datetime.combine(next_run, capped_time)
+
         self.last_run_dt = next_run
 
         return next_run
