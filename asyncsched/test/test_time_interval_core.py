@@ -1,7 +1,7 @@
 import datetime
 from freezegun import freeze_time
 
-from asyncsched.src.time_interval_core import TimeInterval
+from asyncsched.src.time_interval_core import DayInterval, TimeInterval
 
 
 @freeze_time("2012-01-14 23:00:01")
@@ -74,3 +74,19 @@ def test_get_next_run_time_cap():
   sched = TimeInterval(time_interval=('9:30', '15:00'))
   dt = sched.get_next_run_datetime()
   assert dt == datetime.datetime(2022, 7, 19, 9, 30, 0)
+
+@freeze_time("2022-07-19 7:00:01")
+def test_get_next_run_time_day_interval():
+  sched = DayInterval(time_to_run=datetime.time(9, 30))
+  dt = sched.get_next_run_datetime()
+  assert dt == datetime.datetime(2022, 7, 19, 9, 30, 0)
+
+@freeze_time("2022-07-19 9:30:01")
+def test_get_next_run_time_day_interval_wrong_day():
+  sched = DayInterval(time_to_run=datetime.time(9, 30), days_to_run=['fri'])
+
+  dt = sched.get_next_run_datetime()
+  assert dt == datetime.datetime(2022, 7, 22, 9, 30, 0)
+
+  dt = sched.get_next_run_datetime()
+  assert dt == datetime.datetime(2022, 7, 29, 9, 30, 0)

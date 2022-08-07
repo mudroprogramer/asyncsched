@@ -1,4 +1,5 @@
 
+from dataclasses import dataclass
 import datetime
 from typing import List, Tuple
 
@@ -45,3 +46,28 @@ class TimeInterval:
             return self.end_time
 
         return time
+
+class DayInterval:
+    def __init__(self, time_to_run: datetime.time, days_to_run: List[str] = WEEK_DAYS) -> None:
+        self.time_to_run = time_to_run
+        self.days_to_run = days_to_run
+        self.last_run_dt = None
+
+    def get_next_run_datetime(self):
+        if self.last_run_dt is None:
+            next_run = datetime.datetime.combine(datetime.datetime.now(), self.time_to_run)
+            if next_run <= datetime.datetime.now():
+                next_run += datetime.timedelta(days=1)
+        else:
+            next_run = self.last_run_dt + datetime.timedelta(days=1)
+
+        while not self.is_day_legal(next_run):
+            next_run += datetime.timedelta(days=1)
+
+        self.last_run_dt = next_run
+
+        return next_run
+    
+    def is_day_legal(self, dt):
+        return WEEK_DAYS[dt.weekday()] in self.days_to_run
+
