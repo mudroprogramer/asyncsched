@@ -1,5 +1,4 @@
 import asyncio
-import datetime
 from typing import Coroutine
 
 from asyncsched.src.time_interval_core import TimeInterval
@@ -19,7 +18,7 @@ class RunOnce:
     def start(self):
         self.run = True
         seconds_to_sleep = self.timer.seconds_to_next_run()
-        asyncio.create_task(self.schedule_run(seconds_to_sleep))
+        return asyncio.create_task(self.schedule_run(seconds_to_sleep))
 
     async def stop(self):
         self.run = False
@@ -38,4 +37,4 @@ class RunLoop(RunOnce):
             await self.schedule_run(seconds_to_sleep)
 
     def start(self):
-        asyncio.create_task(self.run_on_schedule())
+        return asyncio.create_task(self.run_on_schedule())
