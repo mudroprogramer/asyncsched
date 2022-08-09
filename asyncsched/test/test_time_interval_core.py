@@ -1,5 +1,6 @@
 import datetime
 from freezegun import freeze_time
+import pytz
 
 from asyncsched.src.time_interval_core import DayInterval, TimeInterval
 
@@ -11,6 +12,12 @@ def test_scheduler_get_next_run_dt_seconds():
 
   assert dt == datetime.datetime(2012, 1, 14, 23, 00, 2)
 
+@freeze_time("2012-01-14 20:00:01")
+def test_scheduler_get_next_run_dt_seconds_timezone():
+  sched = TimeInterval(interval_in_seconds=1, timezone=pytz.timezone('US/Eastern'))
+  seconds = sched.seconds_to_next_run()
+
+  assert seconds == 1
 
 @freeze_time("2012-01-14 23:00:01")
 def test_scheduler_get_next_run_dt_minutes():
@@ -88,5 +95,13 @@ def test_get_next_run_time_day_interval_wrong_day():
   dt = sched.get_next_run_datetime()
   assert dt == datetime.datetime(2022, 7, 22, 9, 30, 0)
 
-  dt = sched.get_next_run_datetime()
-  assert dt == datetime.datetime(2022, 7, 29, 9, 30, 0)
+  seconds = sched.seconds_to_next_run()
+  assert seconds == (datetime.datetime(2022, 7, 29, 9, 30, 0) - datetime.datetime(2022, 7, 19, 9, 30, 1)).total_seconds()
+
+@freeze_time("2022-07-19 9:30:01")
+def test_get_next_run_time_day_interval_wrong_day_timezone():
+  sched = DayInterval(time_to_run=datetime.time(9, 30), days_to_run=['fri'], timezone=pytz.timezone('US/Eastern'))
+
+  seconds = sched.seconds_to_next_run()
+  assert seconds == 273599
+  
