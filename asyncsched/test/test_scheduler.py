@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import pytest
 from asyncsched.src.scheduler import RunLoop, RunOnce
 from asyncsched.src.time_interval_core import TimeInterval
@@ -22,8 +23,9 @@ async def test_run_once(capsys):
   assert captured.out == 'test\nrun\n'
   
 @pytest.mark.asyncio
-async def test_schedule_run(capsys):
-  
+async def test_schedule_run(capsys, caplog):
+  caplog.set_level(logging.INFO)
+                   
   async def coroutine():
     print("run")
     

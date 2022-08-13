@@ -1,4 +1,6 @@
 import asyncio
+import datetime
+import logging
 from typing import Coroutine
 
 from asyncsched.src.time_interval_core import TimeInterval
@@ -9,6 +11,8 @@ class RunOnce:
         self.task = None
         self.func = func
         self.timer = timer
+        
+        self.logger = logging.getLogger(__name__)
 
     async def schedule_run(self, seconds):
         await asyncio.sleep(seconds)
@@ -34,6 +38,7 @@ class RunLoop(RunOnce):
 
         while self.run:
             seconds_to_sleep = self.timer.seconds_to_next_run()
+            self.logger.info(f"Scheduled {self.func.__name__} on {datetime.datetime.now()+datetime.timedelta(seconds=seconds_to_sleep)}, seconds to sleep = {seconds_to_sleep}")
             await self.schedule_run(seconds_to_sleep)
 
     def start(self):

@@ -1,6 +1,8 @@
 import datetime
 from typing import List, Tuple
 
+import pytz
+
 WEEK_DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
 
 
@@ -17,38 +19,36 @@ class TimeInterval:
         self.start_time = datetime.time.min if T == 'min' else datetime.time(*[int(x) for x in T.split(':')])
         T = time_interval[1]
         self.end_time = datetime.time.max if T == 'max' else datetime.time(*[int(x) for x in T.split(':')])
-
+        
     def get_next_run_datetime(self):
         if self.last_run_dt is None:
-            self.last_run_dt = datetime.datetime.now(tz=self.timezone)
+            self.last_run_dt = self.dt_now()
 
         next_run = self.last_run_dt + self.interval_in_minutes + self.interval_in_seconds
 
-        while not self.is_day_legal(next_run):
-            next_run = next_run + datetime.timedelta(days=1)
-            next_run = datetime.datetime.combine(next_run, datetime.time(0, 0))
+        if next_run.time() < self.start_time:
+            next_run = datetime.datetime.combine(next_run, self.start_time)
 
-        capped_time = self.cap_to_time_interval(next_run.time())
-        next_run = datetime.datetime.combine(next_run, capped_time)
+        if next_run.time() > self.end_time:
+            next_run += datetime.timedelta(days=1)
+            next_run = datetime.datetime.combine(next_run, self.start_time)
+
+        while not self.is_day_legal(next_run):
+            next_run += datetime.timedelta(days=1)
+            next_run = datetime.datetime.combine(next_run, self.start_time)
 
         self.last_run_dt = next_run
 
         return next_run
     
     def seconds_to_next_run(self):
-        return (self.get_next_run_datetime() - datetime.datetime.now(tz=self.timezone).replace(tzinfo=None)).total_seconds()
+        return (self.get_next_run_datetime() - self.dt_now()).total_seconds()
+
+    def dt_now(self):
+        return datetime.datetime.now(tz=pytz.utc).astimezone(self.timezone).replace(tzinfo=None)
 
     def is_day_legal(self, dt):
         return WEEK_DAYS[dt.weekday()] in self.days_to_run
-
-    def cap_to_time_interval(self, time: datetime.time):
-        if time < self.start_time:
-            return self.start_time
-
-        if time > self.end_time:
-            return self.end_time
-
-        return time
 
 class DayInterval:
     def __init__(self, time_to_run: datetime.time, days_to_run: List[str] = WEEK_DAYS, timezone=None) -> None:
@@ -59,8 +59,8 @@ class DayInterval:
 
     def get_next_run_datetime(self):
         if self.last_run_dt is None:
-            next_run = datetime.datetime.combine(datetime.datetime.now(tz=self.timezone), self.time_to_run)
-            if next_run <= datetime.datetime.now(tz=self.timezone).replace(tzinfo=None):
+            next_run = datetime.datetime.combine(self.dt_now(), self.time_to_run)
+            if next_run <= self.dt_now():
                 next_run += datetime.timedelta(days=1)
         else:
             next_run = self.last_run_dt + datetime.timedelta(days=1)
@@ -73,8 +73,11 @@ class DayInterval:
         return next_run
 
     def seconds_to_next_run(self):
-        return (self.get_next_run_datetime() - datetime.datetime.now(tz=self.timezone).replace(tzinfo=None)).total_seconds()
+        return (self.get_next_run_datetime() - self.dt_now()).total_seconds()
     
+    def dt_now(self):
+        return datetime.datetime.now(tz=pytz.utc).astimezone(self.timezone).replace(tzinfo=None)
+
     def is_day_legal(self, dt):
         return WEEK_DAYS[dt.weekday()] in self.days_to_run
 
