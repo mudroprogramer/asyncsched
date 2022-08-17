@@ -81,3 +81,6 @@ class DayInterval:
     def is_day_legal(self, dt):
         return WEEK_DAYS[dt.weekday()] in self.days_to_run
 
+class DayRange:
+    def __init__(self, start_time: datetime.time, start_day: str, end_time: datetime.time, end_day: str, timezone=None):
+        pass
