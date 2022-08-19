@@ -1,4 +1,5 @@
 import datetime
+from operator import index
 from typing import List, Tuple
 
 import pytz
@@ -81,3 +82,48 @@ class DayInterval:
     def is_day_legal(self, dt):
         return WEEK_DAYS[dt.weekday()] in self.days_to_run
 
+class Timer:
+    def __init__(self, timezone=None):
+        self.timezone = timezone
+
+    def get_next_run_datetime(self):
+        raise NotImplementedError
+
+    def dt_now(self) -> datetime.datetime:
+        return datetime.datetime.now(tz=pytz.utc).astimezone(self.timezone).replace(tzinfo=None)
+    
+    def seconds_to_next_run(self):
+        return (self.get_next_run_datetime() - self.dt_now()).total_seconds()
+
+class StartEndToggle(Timer):
+    def __init__(self, start_time: datetime.time, start_day: str, end_time: datetime.time, end_day: str, timezone=None):
+        super().__init__(timezone)
+        self.start_time = start_time
+        self.start_day = start_day
+        self.end_time = end_time
+        self.end_day = end_day
+    
+    def get_next_run_datetime(self):
+        next_run = self.dt_now()
+
+        days_to_start_day = (WEEK_DAYS.index(self.start_day) - next_run.weekday()) % 7
+        next_start_dt = datetime.datetime.combine(next_run, self.start_time) + datetime.timedelta(days=days_to_start_day)
+        if next_start_dt <= next_run:
+            next_start_dt += datetime.timedelta(days=7)
+        
+        days_to_end_day = (WEEK_DAYS.index(self.end_day) - next_run.weekday()) % 7
+        next_end_dt = datetime.datetime.combine(next_run, self.end_time) + datetime.timedelta(days=days_to_end_day)
+        if next_end_dt <= next_run:
+            next_end_dt += datetime.timedelta(days=7)
+        
+        if (next_start_dt < next_end_dt):
+            next_run = next_start_dt
+
+        if (next_start_dt >= next_end_dt):
+            next_run = next_end_dt
+
+        self.last_run_dt = next_run
+        return next_run
+
+    # def is_before_day_range(self, next_run):
+    #     return next_run.time() <= self.start_time and next_run.weekday() < WEEK_DAYS.index(self.start_day)
