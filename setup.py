@@ -3,7 +3,7 @@ import setuptools
 
 setuptools.setup(
     name='asyncsched',
-    version='0.1.0',
+    version='0.1.1',
     author='Alexander Shapiro',
     author_email='mudroprogramer@gmail.com',
     description='Simple coroutine scheduler for asyncio',
