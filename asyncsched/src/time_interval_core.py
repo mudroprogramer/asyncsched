@@ -85,6 +85,7 @@ class DayInterval:
 class Timer:
     def __init__(self, timezone=None):
         self.timezone = timezone
+        self.last_run_dt = None
 
     def get_next_run_datetime(self):
         raise NotImplementedError
@@ -102,28 +103,43 @@ class StartEndToggle(Timer):
         self.start_day = start_day
         self.end_time = end_time
         self.end_day = end_day
-    
+
     def get_next_run_datetime(self):
         next_run = self.dt_now()
 
-        days_to_start_day = (WEEK_DAYS.index(self.start_day) - next_run.weekday()) % 7
-        next_start_dt = datetime.datetime.combine(next_run, self.start_time) + datetime.timedelta(days=days_to_start_day)
-        if next_start_dt <= next_run:
-            next_start_dt += datetime.timedelta(days=7)
-        
-        days_to_end_day = (WEEK_DAYS.index(self.end_day) - next_run.weekday()) % 7
-        next_end_dt = datetime.datetime.combine(next_run, self.end_time) + datetime.timedelta(days=days_to_end_day)
-        if next_end_dt <= next_run:
-            next_end_dt += datetime.timedelta(days=7)
-        
-        if (next_start_dt < next_end_dt):
+        next_start_dt = self.get_next_start_dt(next_run)
+
+        next_end_dt = self.get_next_end_dt(next_run)
+
+        if (next_start_dt <= next_end_dt):
             next_run = next_start_dt
 
-        if (next_start_dt >= next_end_dt):
-            next_run = next_end_dt
+        if (next_start_dt > next_end_dt):
+            is_init = (self.last_run_dt is None)
+            if (is_init):
+                pass
+            else:
+                next_run = next_end_dt
 
         self.last_run_dt = next_run
+
         return next_run
 
-    # def is_before_day_range(self, next_run):
-    #     return next_run.time() <= self.start_time and next_run.weekday() < WEEK_DAYS.index(self.start_day)
+    def get_next_start_dt(self, next_run_dt):
+
+        next_start_dt = self.get_next_dt(next_run_dt, self.start_day, self.start_time)
+
+        return next_start_dt
+
+    def get_next_end_dt(self, next_run_dt):
+
+        next_end_dt = self.get_next_dt(next_run_dt, self.end_day, self.end_time)
+
+        return next_end_dt
+
+    def get_next_dt(self, next_run_dt, day, time):
+        days_to_end_day = (WEEK_DAYS.index(day) - next_run_dt.weekday()) % 7
+        next_end_dt = datetime.datetime.combine(next_run_dt, time) + datetime.timedelta(days=days_to_end_day)
+        if next_end_dt <= next_run_dt:
+            next_end_dt += datetime.timedelta(days=7)
+        return next_end_dt

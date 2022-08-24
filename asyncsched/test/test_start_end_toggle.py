@@ -12,7 +12,9 @@ def test_get_DayRange_before_start():
   day = 'mon'
   sched = StartEndToggle(start_time=datetime.time(8, 0), start_day=day, end_time=datetime.time(17, 0), end_day='fri', timezone=pytz.utc)
   dt = sched.get_next_run_datetime()
-  assert dt == datetime.datetime(2022, 8, 15, 8, 0, 0)
+  
+  next_monday_at_8 = datetime.datetime(2022, 8, 15, 8, 0, 0)
+  assert dt == next_monday_at_8
   assert dt.weekday() == WEEK_DAYS.index('mon')
   
   sched = StartEndToggle(start_time=datetime.time(8, 0), start_day=day, end_time=datetime.time(17, 0), end_day='fri', timezone=pytz.utc)
@@ -23,9 +25,13 @@ def test_get_DayRange_before_start():
 def test_get_DayRange_on_start():
   sched = StartEndToggle(start_time=datetime.time(8, 0), start_day='mon', end_time=datetime.time(17, 0), end_day='fri', timezone=pytz.utc)
   dt = sched.get_next_run_datetime()
+  assert dt == datetime.datetime(2022, 8, 15, 8, 0, 0)
+  dt = sched.get_next_run_datetime()
   assert dt == datetime.datetime(2022, 8, 19, 17, 0, 0)
   
   sched = StartEndToggle(start_time=datetime.time(8, 0), start_day='mon', end_time=datetime.time(17, 0), end_day='fri', timezone=pytz.utc)
+  seconds = sched.seconds_to_next_run()
+  assert seconds == 0
   seconds = sched.seconds_to_next_run()
   assert seconds == 378000
 
@@ -33,9 +39,13 @@ def test_get_DayRange_on_start():
 def test_get_DayRange_between_start_end():
   sched = StartEndToggle(start_time=datetime.time(8, 0), start_day='mon', end_time=datetime.time(17, 0), end_day='fri', timezone=pytz.utc)
   dt = sched.get_next_run_datetime()
+  assert dt == datetime.datetime(2022, 8, 16, 7, 0, 1)
+  dt = sched.get_next_run_datetime()
   assert dt == datetime.datetime(2022, 8, 19, 17, 0, 0)
   
   sched = StartEndToggle(start_time=datetime.time(8, 0), start_day='mon', end_time=datetime.time(17, 0), end_day='fri', timezone=pytz.utc)
+  seconds = sched.seconds_to_next_run()
+  assert seconds == 0
   seconds = sched.seconds_to_next_run()
   assert seconds == 295199
 
